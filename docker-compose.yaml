@@ -1,0 +1,30 @@
+version: '3.8' # Defines the Docker Compose file format version
+services: # Starts the block where we define our containers
+  mongo: # Service name: Used by other containers as a domain name to connect
+    image: mongo:latest # Downloads the official, most recent MongoDB image from Docker Hub
+    container_name: mongo # Sets the visible name of the container when running 'docker ps'
+    ports:
+      - "27017:27017" # Maps port 27017 on your machine to port 27017 inside the container
+    environment: # Starts the block to pass system settings to MongoDB
+      MONGO_INITDB_ROOT_USERNAME: root # Creates an administrator user named 'root' on first boot
+      MONGO_INITDB_ROOT_PASSWORD: 123 # Sets the password for the root user to '123'
+    volumes:
+      - ./custom-db:/data/db # Links a local 'custom-db' folder to the container so data isn't lost
+    networks:
+      - mongo-net # Connects this database container to our custom virtual network
+
+  mongo-express: # Service name for the web browser user interface
+    image: mongo-express:latest # Downloads the latest image for the web-based manager tool
+    container_name: mongo-express # Sets the visible name for this UI container
+    ports:
+      - "8081:8081" # Maps port 8081 on your machine so you can type localhost:8081 in your browser
+    environment: # Starts environmental settings for the Web UI tool
+      ME_CONFIG_MONGODB_URL: "mongodb://root:123@mongo:27017/?authSource=admin" # The full login string pointing directly to our 'mongo' container
+    depends_on:
+      - mongo # Tells Docker to wait and launch the database container before starting this UI
+    networks:
+      - mongo-net # Puts this container on the same network so it can talk to the database
+
+networks: # Starts the block where we define custom network rules
+  mongo-net: # The name of our custom virtual network
+    driver: bridge # Uses the standard isolation 'bridge' driver to link these containers together
